@@ -1,8 +1,11 @@
 import java.net.Socket;
+import java.net.URLDecoder;
+import java.util.StringTokenizer;
 import java.net.ServerSocket;
 import java.net.InetAddress;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,7 +32,7 @@ public class WebServerTest {
 					InetAddress address = socket.getInetAddress();
 					System.out.println("客户端ip地址:" + address.getHostAddress());
 					new HttpServerThread(socket).start();
-					Thread.sleep(1000);//让出cpu 否则执行一次shutdown关不掉
+					Thread.sleep(1000);// 让出cpu 否则执行一次shutdown关不掉
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -82,7 +85,7 @@ class HttpServerThread extends Thread {
 class Request {
 
 	private InputStream input;
-	private String uri="";
+	private String uri = "";
 
 	public Request(InputStream input) {
 		this.input = input;
@@ -105,19 +108,34 @@ class Request {
 		uri = parseUri(request.toString());
 	}
 
+	/**
+	 * @param requestString
+	 * @return
+	 */
 	private String parseUri(String requestString) {
-		int index1, index2;
+		int index1, index2=0, i3, i4;
 		index1 = requestString.indexOf(' ');
 		if (index1 != -1) {
 			index2 = requestString.indexOf(' ', index1 + 1);
 			if (index2 > index1)
-				return requestString.substring(index1 + 1, index2);
+				System.out.println("请求资源:" + requestString.substring(index1 + 1, index2));
 		}
-		return null;
+		i4 = requestString.indexOf("\r\n");
+		while (i4 + 2 < requestString.length() - 3) { // 请求头后还有/r/n /n
+			i3 = requestString.indexOf(":", i4);
+			System.out.print("请求头" + requestString.substring(i4 + 2, i3));
+			// System.out.println(i3);
+			if (i3 != -1) {
+				i4 = requestString.indexOf("\r\n", i3 + 1);
+				// System.out.println(i4);
+				if (i4 > i3)
+					System.out.println(requestString.substring(i3 + 1, i4));
+			}
+		}
+		return requestString.substring(index1 + 1, index2);
 	}
 
 	public String getUri() {
-		System.out.println("请求资源:" + uri);
 		return uri;
 	}
 
